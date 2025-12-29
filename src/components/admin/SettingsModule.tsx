@@ -39,6 +39,7 @@ export default function SettingsModule({
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isBackingUp, setIsBackingUp] = useState(false);
 
   // LINE OA Settings
   const [lineSettings, setLineSettings] = useState({
@@ -104,6 +105,31 @@ export default function SettingsModule({
 
   const updateSetting = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleBackup = async () => {
+    setIsBackingUp(true);
+    try {
+      const response = await fetch('/api/admin/backup');
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `qa-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        alert('เกิดข้อผิดพลาดในการดาวน์โหลด Backup');
+      }
+    } catch (error) {
+      console.error('Backup error:', error);
+      alert('เกิดข้อผิดพลาดในการดาวน์โหลด Backup');
+    } finally {
+      setIsBackingUp(false);
+    }
   };
 
   const renderGeneralSettings = () => (
@@ -540,9 +566,22 @@ export default function SettingsModule({
             <h4 className="font-medium text-slate-800">สำรองข้อมูลด้วยตนเอง</h4>
             <p className="text-sm text-slate-500">ดาวน์โหลดข้อมูลทั้งหมดเป็นไฟล์</p>
           </div>
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors">
-            <Download className="w-4 h-4" />
-            <span className="font-medium">Backup Now</span>
+          <button
+            onClick={handleBackup}
+            disabled={isBackingUp}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50"
+          >
+            {isBackingUp ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span className="font-medium">กำลังดาวน์โหลด...</span>
+              </>
+            ) : (
+              <>
+                <Download className="w-4 h-4" />
+                <span className="font-medium">Backup Now</span>
+              </>
+            )}
           </button>
         </div>
       </div>
