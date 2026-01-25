@@ -60,7 +60,7 @@ interface AdminPanelProps {
   initialData?: DepartmentData[];
   fieldLabels: Record<string, string>;
   computedFields: Set<string>;
-  computeFields: (data: Record<string, string>, departmentId: string) => Record<string, string>;
+  computeFields: (fields: Record<string, string>, fiscalYear: string, month: string) => Record<string, string>;
   currentUser?: {
     name: string;
     email?: string;
@@ -75,7 +75,8 @@ interface AdminPanelProps {
 type AdminView = 'dashboard' | 'export' | 'settings' | 'data';
 type DepartmentGroup = 'all' | 'ipd' | 'opd' | 'special';
 
-const FISCAL_YEARS = ['2568', '2569', '2570', '2571', '2572'];
+// Generate fiscal years: 30 years starting from 2569 (2026)
+const FISCAL_YEARS = Array.from({ length: 30 }, (_, i) => String(2569 + i));
 
 // Department Groups Configuration
 const DEPARTMENT_GROUPS = {
@@ -119,8 +120,10 @@ const DEPARTMENT_GROUPS = {
     textColor: 'text-emerald-600',
     borderColor: 'border-emerald-200',
     departmentIds: [
-      'OPD001', 'OPD002', 'OPD003', 'OPD004', 'OPD005',
-      'OPD006', 'OPD007', 'OPD008', 'OPD009', 'OPD010'
+      'OPD_GP', 'OPD_PED', 'OPD_ANC', 'OPD_DMHT', 'OPD_HEART',
+      'OPD_ASTHMA', 'OPD_CKD', 'OPD_NEURO', 'OPD_HIV', 'OPD_TB',
+      'OPD_SURG', 'OPD_ORTHO', 'OPD_URO', 'OPD_EYE', 'OPD_ENT',
+      'OPD_AFTERHOUR', 'OPD_ELDER'
     ]
   }
 };
@@ -132,7 +135,7 @@ export default function AdminPanel({
   computedFields,
   computeFields,
   currentUser = { name: 'Admin', email: 'admin@hospital.go.th', role: 'Administrator' },
-  initialFiscalYear = '2568',
+  initialFiscalYear = '2569',
   onLogout
 }: AdminPanelProps) {
   // ================= State =================
@@ -180,9 +183,10 @@ export default function AdminPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           departmentId: record.departmentId,
+          departmentName: record.departmentName,
           fiscalYear: record.fiscalYear,
           month: record.month,
-          data: record.data
+          fields: record.data
         })
       });
 
@@ -598,21 +602,22 @@ export default function AdminPanel({
         {/* Sidebar Footer */}
         {!sidebarCollapsed && (
           <div className={`absolute bottom-0 left-0 right-0 p-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-            {/* Fiscal Year Selector */}
+            {/* Fiscal Year Selector - Enhanced Visibility */}
             <div className="mb-4">
-              <label className={`block text-xs font-medium mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                ปีงบประมาณ
+              <label className={`block text-sm font-bold mb-3 ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+                📅 ปีงบประมาณ
               </label>
               <select
                 value={fiscalYear}
                 onChange={(e) => setFiscalYear(e.target.value)}
-                className={`w-full px-3 py-2 rounded-lg border text-sm font-medium ${darkMode
-                  ? 'bg-gray-700 border-gray-600 text-white'
-                  : 'bg-white border-gray-200 text-gray-700'
-                  } focus:ring-2 focus:ring-indigo-500`}
+                className={`w-full px-4 py-3 rounded-xl border-2 text-base font-semibold shadow-lg transition-all ${darkMode
+                  ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-purple-500 text-white hover:border-purple-400'
+                  : 'bg-gradient-to-r from-white to-indigo-50 border-indigo-400 text-indigo-900 hover:border-indigo-500'
+                  } focus:ring-4 focus:ring-indigo-300 focus:border-indigo-600`}
+                style={{ fontSize: '16px', fontWeight: '600' }}
               >
                 {FISCAL_YEARS.map(year => (
-                  <option key={year} value={year}>พ.ศ. {year}</option>
+                  <option key={year} value={year}>พ.ศ. {year} (ค.ศ. {Number(year) - 543})</option>
                 ))}
               </select>
             </div>

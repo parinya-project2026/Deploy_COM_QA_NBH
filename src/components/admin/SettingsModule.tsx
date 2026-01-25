@@ -4,8 +4,8 @@ import React, { useState } from 'react';
 import {
   Settings, Bell, Shield, Database, Users, Clock, Palette,
   Save, RefreshCw, AlertTriangle, CheckCircle, Info,
-  ChevronRight, Lock, Eye, EyeOff, Trash2, Download,
-  MessageSquare, Send, Copy, ExternalLink
+  ChevronRight, Lock, Eye, EyeOff, Trash2, Download, Upload,
+  MessageSquare, Send, Copy, ExternalLink, FileJson, Check, X
 } from 'lucide-react';
 
 // Import LINE Notification Settings component
@@ -40,6 +40,16 @@ export default function SettingsModule({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
+  
+  // Restore state
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [restoreResult, setRestoreResult] = useState<{
+    success: boolean;
+    message: string;
+    results?: { total: number; success: number; failed: number; errors?: string[] };
+  } | null>(null);
+  const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+  const [pendingRestoreFile, setPendingRestoreFile] = useState<File | null>(null);
 
   // LINE OA Settings
   const [lineSettings, setLineSettings] = useState({
@@ -129,6 +139,73 @@ export default function SettingsModule({
       alert('เกิดข้อผิดพลาดในการดาวน์โหลด Backup');
     } finally {
       setIsBackingUp(false);
+    }
+  };
+
+  // Handle restore file selection
+  const handleRestoreFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.json')) {
+      setRestoreResult({
+        success: false,
+        message: 'กรุณาเลือกไฟล์ .json เท่านั้น'
+      });
+      return;
+    }
+
+    setPendingRestoreFile(file);
+    setShowRestoreConfirm(true);
+    
+    // Reset file input
+    event.target.value = '';
+  };
+
+  // Handle restore confirmation
+  const handleRestoreConfirm = async () => {
+    if (!pendingRestoreFile) return;
+
+    setShowRestoreConfirm(false);
+    setIsRestoring(true);
+    setRestoreResult(null);
+
+    try {
+      // Read file content
+      const fileContent = await pendingRestoreFile.text();
+      let backupData;
+
+      try {
+        backupData = JSON.parse(fileContent);
+      } catch {
+        setRestoreResult({
+          success: false,
+          message: 'ไฟล์ JSON ไม่ถูกต้อง - ไม่สามารถ parse ได้'
+        });
+        setIsRestoring(false);
+        return;
+      }
+
+      // Call restore API
+      const response = await fetch('/api/admin/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(backupData)
+      });
+
+      const result = await response.json();
+      setRestoreResult(result);
+
+    } catch (error) {
+      console.error('Restore error:', error);
+      setRestoreResult({
+        success: false,
+        message: error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการนำเข้าข้อมูล'
+      });
+    } finally {
+      setIsRestoring(false);
+      setPendingRestoreFile(null);
     }
   };
 
@@ -586,6 +663,95 @@ export default function SettingsModule({
         </div>
       </div>
 
+      {/* Restore from Backup */}
+      <div className="p-4 border border-emerald-200 rounded-lg bg-emerald-50">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h4 className="font-medium text-emerald-800 flex items-center gap-2">
+              <FileJson className="w-5 h-5" />
+              นำเข้าข้อมูลจากไฟล์ Backup
+            </h4>
+            <p className="text-sm text-emerald-600">อัปโหลดไฟล์ JSON backup เพื่อกู้คืนข้อมูล</p>
+          </div>
+          <label className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg cursor-pointer transition-colors ${
+            isRestoring 
+              ? 'bg-emerald-200 text-emerald-600 opacity-50 cursor-not-allowed' 
+              : 'bg-emerald-600 text-white hover:bg-emerald-700'
+          }`}>
+            {isRestoring ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span className="font-medium">กำลังนำเข้า...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                <span className="font-medium">Restore Now</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleRestoreFileSelect}
+              disabled={isRestoring}
+              className="hidden"
+            />
+          </label>
+        </div>
+
+        {/* Restore Result */}
+        {restoreResult && (
+          <div className={`mt-3 p-3 rounded-lg ${
+            restoreResult.success 
+              ? 'bg-emerald-100 border border-emerald-300' 
+              : 'bg-rose-100 border border-rose-300'
+          }`}>
+            <div className="flex items-start gap-2">
+              {restoreResult.success ? (
+                <Check className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <X className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <p className={`font-medium ${restoreResult.success ? 'text-emerald-800' : 'text-rose-800'}`}>
+                  {restoreResult.message}
+                </p>
+                {restoreResult.results && (
+                  <div className="mt-2 text-sm">
+                    <p className={restoreResult.success ? 'text-emerald-700' : 'text-rose-700'}>
+                      สำเร็จ: {restoreResult.results.success} / {restoreResult.results.total} รายการ
+                    </p>
+                    {restoreResult.results.failed > 0 && restoreResult.results.errors && (
+                      <div className="mt-2">
+                        <p className="text-rose-700 font-medium">รายการที่ล้มเหลว:</p>
+                        <ul className="list-disc list-inside text-rose-600 text-xs mt-1 max-h-24 overflow-y-auto">
+                          {restoreResult.results.errors.slice(0, 5).map((err, i) => (
+                            <li key={i}>{err}</li>
+                          ))}
+                          {restoreResult.results.errors.length > 5 && (
+                            <li>...และอีก {restoreResult.results.errors.length - 5} รายการ</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              <button 
+                onClick={() => setRestoreResult(null)}
+                className={`p-1 rounded hover:bg-white/50 ${restoreResult.success ? 'text-emerald-600' : 'text-rose-600'}`}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
+        <p className="text-xs text-emerald-600 mt-3">
+          💡 รองรับไฟล์ .json ที่ได้จากการ Backup ของระบบเท่านั้น (ข้อมูลที่ซ้ำกันจะถูกอัปเดตทับ)
+        </p>
+      </div>
+
       {/* Danger Zone */}
       <div className="p-4 border border-rose-200 rounded-lg bg-rose-50">
         <h4 className="font-medium text-rose-800 mb-3">⚠️ Danger Zone</h4>
@@ -645,6 +811,48 @@ export default function SettingsModule({
                 className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-lg hover:bg-rose-700"
               >
                 รีเซ็ตทั้งหมด
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Restore Confirmation Modal */}
+      {showRestoreConfirm && pendingRestoreFile && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-md mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <FileJson className="w-6 h-6 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-slate-800">ยืนยันการนำเข้าข้อมูล</h3>
+            </div>
+            <div className="p-3 bg-slate-50 rounded-lg mb-4">
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">ไฟล์:</span> {pendingRestoreFile.name}
+              </p>
+              <p className="text-sm text-slate-600">
+                <span className="font-medium">ขนาด:</span> {(pendingRestoreFile.size / 1024).toFixed(2)} KB
+              </p>
+            </div>
+            <p className="text-slate-600 mb-4 text-sm">
+              ⚠️ ข้อมูลที่มีอยู่แล้ว (แผนก + เดือน + ปี เดียวกัน) จะถูกอัปเดตทับด้วยข้อมูลจากไฟล์ backup
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowRestoreConfirm(false);
+                  setPendingRestoreFile(null);
+                }}
+                className="flex-1 px-4 py-2 border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-50"
+              >
+                ยกเลิก
+              </button>
+              <button
+                onClick={handleRestoreConfirm}
+                className="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+              >
+                นำเข้าข้อมูล
               </button>
             </div>
           </div>

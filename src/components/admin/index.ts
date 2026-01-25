@@ -35,7 +35,7 @@ export interface AdminPanelProps {
   initialData?: DepartmentData[];
   fieldLabels: Record<string, string>;
   computedFields: Set<string>;
-  computeFields: (data: Record<string, string>, departmentId: string) => Record<string, string>;
+  computeFields: (fields: Record<string, string>, fiscalYear: string, month: string) => Record<string, string>;
   currentUser?: {
     name: string;
     email: string;
@@ -76,8 +76,10 @@ export const DEPARTMENT_GROUPS = {
     nameTh: 'ผู้ป่วยนอก',
     description: 'คลินิกผู้ป่วยนอกทั้งหมด',
     departmentIds: [
-      'OPD001', 'OPD002', 'OPD003', 'OPD004', 'OPD005',
-      'OPD006', 'OPD007', 'OPD008', 'OPD009', 'OPD010'
+      'OPD_GP', 'OPD_PED', 'OPD_ANC', 'OPD_DMHT', 'OPD_HEART',
+      'OPD_ASTHMA', 'OPD_CKD', 'OPD_NEURO', 'OPD_HIV', 'OPD_TB',
+      'OPD_SURG', 'OPD_ORTHO', 'OPD_URO', 'OPD_EYE', 'OPD_ENT',
+      'OPD_AFTERHOUR', 'OPD_ELDER'
     ]
   }
 };
@@ -111,15 +113,27 @@ export const DEPARTMENT_NAMES: Record<string, string> = {
   'SPECIAL002': 'ห้องอุบัติเหตุฉุกเฉิน (ER)',
   'SPECIAL003': 'วิสัญญีพยาบาล (Anesth)',
   'SPECIAL004': 'ห้องคลอด (LR)',
-  // OPD
-  'OPD001': 'OPD ศัลยกรรม',
-  'OPD002': 'OPD กุมารเวช',
-  'OPD003': 'OPD (Med+GP+Ortho+หัวใจ+พิเศษ)',
-  'OPD004': 'OPD ANC',
-  'OPD005': 'OPD Uro',
-  'OPD006': 'OPD Neuro',
-  'OPD007': 'OPD จักษุ',
-  'OPD008': 'OPD ENT',
-  'OPD009': 'OPD DM/HT',
-  'OPD010': 'OPD CAPD'
+  // OPD - General Care
+  'OPD_GP': 'OPD GP - ตรวจโรคทั่วไป',
+  'OPD_PED': 'OPD Pediatrics - กุมารเวช (เด็ก)',
+  'OPD_ANC': 'OPD ANC - ฝากครรภ์',
+  // OPD - Chronic & Internal Medicine
+  'OPD_DMHT': 'OPD DM/HT - เบาหวาน/ความดัน',
+  'OPD_HEART': 'OPD Heart - หัวใจและหลอดเลือด',
+  'OPD_ASTHMA': 'OPD Asthma - หอบหืด/ปอด',
+  'OPD_CKD': 'OPD CKD/CAPD - โรคไต/ล้างไต',
+  'OPD_NEURO': 'OPD Neuro - อายุรกรรมประสาท',
+  // OPD - Special Clinic
+  'OPD_HIV': 'OPD HIV - คลินิกพิเศษ (NAP)',
+  'OPD_TB': 'OPD TB/COC - วัณโรค/ต่อเนื่อง',
+  // OPD - Surgery
+  'OPD_SURG': 'OPD Surgery - ศัลยกรรมทั่วไป',
+  'OPD_ORTHO': 'OPD Orthopedic - กระดูกและข้อ',
+  'OPD_URO': 'OPD Uro - ศัลยกรรมทางเดินปัสสาวะ',
+  // OPD - Specialty
+  'OPD_EYE': 'OPD Eye - จักษุ (ตา)',
+  'OPD_ENT': 'OPD ENT - หู คอ จมูก',
+  // OPD - Other Clinics
+  'OPD_AFTERHOUR': 'OPD คลินิกรักษาทั่วไป (นอกเวลา)',
+  'OPD_ELDER': 'OPD คลินิกผู้สูงอายุ'
 };

@@ -124,6 +124,11 @@ function computeFields(
     const er_2_2 = toNum(next.er_2_2);
     next.er_2_3 = er_2_2 > 0 ? ((er_2_1 / er_2_2) * 100).toFixed(2) + "%" : "0.00%";
 
+    // ER Pain management total: (pm_1_1 + pm_1_2)
+    const er_pm_1_1 = toNum(next.er_pm_1_1);
+    const er_pm_1_2 = toNum(next.er_pm_1_2);
+    next.er_pm_1 = (er_pm_1_1 + er_pm_1_2).toString();
+
     // ER Pain management documentation: (pm_3_1 / pm_3_2) * 100
     const er_pm_3_1 = toNum(next.er_pm_3_1);
     const er_pm_3_2 = toNum(next.er_pm_3_2);
@@ -151,6 +156,11 @@ function computeFields(
     const an_2_1 = toNum(next.an_2_1);
     const an_2_2 = toNum(next.an_2_2);
     next.an_2_3 = an_2_2 > 0 ? ((an_2_1 / an_2_2) * 100).toFixed(2) + "%" : "0.00%";
+
+    // Anesth Pain management total: (h2_1_2 + h2_1_3)
+    const an_h2_1_2 = toNum(next.an_h2_1_2);
+    const an_h2_1_3_pm = toNum(next.an_h2_1_3);
+    next.an_h2_1_1 = (an_h2_1_2 + an_h2_1_3_pm).toString();
 
     // Anesth Pain management documentation rate
     const an_h2_3_1 = toNum(next.an_h2_3_1);
@@ -195,15 +205,20 @@ function computeFields(
     next.lr_2_6 = lr_2_5 > 0 ? ((lr_2_4 * 7) / lr_2_5).toFixed(2) : "0.00";
     next.lr_2_productivity = "0.00%";
 
+    // LR Pain management total: (pm_1_1 + pm_1_2)
+    const lr_pm_1_1 = toNum(next.lr_pm_1_1);
+    const lr_pm_1_2 = toNum(next.lr_pm_1_2);
+    next.lr_pm_1 = (lr_pm_1_1 + lr_pm_1_2).toString();
+
     // LR Pain management documentation
     const lr_pm_3_1 = toNum(next.lr_pm_3_1);
     const lr_pm_3_2 = toNum(next.lr_pm_3_2);
     next.lr_pm_3_3 = lr_pm_3_2 > 0 ? (lr_pm_3_1 / lr_pm_3_2).toFixed(2) + "%" : "0.00%";
 
-    // LR หัวตี้ 2 calculations
+    // LR หัวข้อ 2 calculations
     const lr_h2_1_6_1 = toNum(next.lr_h2_1_6_1);
     const lr_h2_1_6_2 = toNum(next.lr_h2_1_6_2);
-    next.lr_h2_1_6_3 = lr_h2_1_6_2 > 0 ? ((lr_h2_1_6_1 / lr_h2_1_6_2) * 100).toFixed(2) + "%" : "0.00%";
+    next.lr_h2_1_6 = lr_h2_1_6_2 > 0 ? ((lr_h2_1_6_1 / lr_h2_1_6_2) * 100).toFixed(2) + "%" : "0.00%";
 
     // Birth Asphyxia rate
     const lr_h2_3_1 = toNum(next.lr_h2_3_1);

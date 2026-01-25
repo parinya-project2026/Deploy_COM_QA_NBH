@@ -25,7 +25,7 @@ export async function POST(request: Request) {
         }
     } catch (error) {
         return NextResponse.json(
-            { success: false, error: "เกินข้อผิดพลาดในระบบ" },
+            { success: false, error: "เกิดข้อผิดพลาดในระบบ" },
             { status: 500 }
         );
     }
