@@ -2,6 +2,9 @@
   "name": "qa_vscode2568",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
