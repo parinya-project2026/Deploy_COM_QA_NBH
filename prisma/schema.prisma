@@ -20,3 +20,38 @@ model QARecord {
   @@unique([departmentId, fiscalYear, month], name: "qa_unique_index")
   @@index([departmentId, fiscalYear], name: "qa_dept_year_idx")
 }
+
+// =============================================
+// Security Models - Authentication & Audit
+// =============================================
+
+model User {
+  id             String   @id @default(cuid())
+  departmentId   String   @unique
+  departmentName String
+  passwordHash   String   @db.VarChar(255)
+  role           String   @default("user") // user, special_unit, opd, admin
+  isActive       Boolean  @default(true)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  loginAttempts  LoginAttempt[]
+  
+  @@index([departmentId], name: "user_dept_idx")
+}
+
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id])
+  departmentId String
+  ipAddress   String   @db.VarChar(45)
+  userAgent   String?  @db.VarChar(500)
+  success     Boolean
+  failReason  String?  @db.VarChar(100)
+  createdAt   DateTime @default(now())
+  
+  @@index([departmentId, createdAt], name: "login_dept_time_idx")
+  @@index([ipAddress, createdAt], name: "login_ip_time_idx")
+}
